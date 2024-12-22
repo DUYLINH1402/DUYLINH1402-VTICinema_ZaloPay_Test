@@ -18,6 +18,10 @@ const config = {
   endpoint: "https://sb-openapi.zalopay.vn/v2/create",
 };
 
+// Route mặc định
+app.get("/", (req, res) => {
+  res.send("Welcome to the VTI Cinema Payment API!");
+});
 app.use(cors()); // Cho phép tất cả các domain truy cập API (dùng cho development)
 
 app.use(bodyParser.json());
