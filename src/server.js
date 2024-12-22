@@ -17,7 +17,6 @@ const config = {
 };
 
 const cors = require("cors");
-
 app.use(
   cors({
     origin: "*", // Hoặc thay "*" bằng URL cụ thể như "http://localhost:5173"
@@ -191,8 +190,8 @@ app.post("/callback", (req, res) => {
 //   }
 // });
 
-// app.listen(8888, function () {
-//   console.log("Server is listening at port :8888");
-// });
+app.listen(8888, function () {
+  console.log("Server is listening at port :8888");
+});
 
 module.exports = app;
