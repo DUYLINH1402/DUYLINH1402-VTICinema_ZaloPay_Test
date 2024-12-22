@@ -7,9 +7,7 @@ const bodyParser = require("body-parser"); // npm install body-parser
 const moment = require("moment"); // npm install moment
 const cors = require("cors");
 const app = express();
-console.log("ZALO_APP_ID:", process.env.ZALO_APP_ID);
-console.log("ZALO_KEY1:", process.env.ZALO_KEY1);
-console.log("ZALO_KEY2:", process.env.ZALO_KEY2);
+
 // APP INFO, STK TEST: 4111 1111 1111 1111
 const config = {
   app_id: process.env.ZALO_APP_ID,
