@@ -19,7 +19,7 @@ const config = {
 const cors = require("cors");
 app.use(
   cors({
-    origin: "*", // Hoặc thay "*" bằng URL cụ thể như "http://localhost:5173"
+    origin: "https://vticinema.web.app/", // Hoặc thay "*" bằng URL cụ thể như "http://localhost:5173"
     methods: ["GET", "POST"], // Các method được phép
     allowedHeaders: ["Content-Type", "Authorization"], // Các header được phép
   })
