@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 .env
 .vercel
+/config/your-service-account-file.json
+

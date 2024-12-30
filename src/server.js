@@ -1,14 +1,16 @@
 // Node v10.15.3
-require("dotenv").config(); // Load biến môi trường từ .env
+require("dotenv").config(); // Load file .env
 const axios = require("axios"); // npm install axios
 const CryptoJS = require("crypto-js"); // npm install crypto-js
 const express = require("express"); // npm install express
 const bodyParser = require("body-parser"); // npm install body-parser
 const moment = require("moment"); // npm install moment
+const cron = require("node-cron");
 const cors = require("cors");
 const app = express();
+const { getDatabase, ref, remove } = require("firebase-admin/database");
+const { db } = require("./firebase/firebaseConfig");
 
-// APP INFO, STK TEST: 4111 1111 1111 1111
 const config = {
   app_id: process.env.ZALO_APP_ID,
   key1: process.env.ZALO_KEY1,
@@ -16,6 +18,7 @@ const config = {
   endpoint: "https://sb-openapi.zalopay.vn/v2/create",
 };
 // CORS ORIGIN
+// Cho phép khi Test và khi đã Deploy
 const allowedOrigins = ["http://localhost:5173", "https://vticinema.web.app"];
 app.use(
   cors({
@@ -48,27 +51,41 @@ app.use(bodyParser.json());
 app.post("/payment", async (req, res) => {
   const embed_data = {
     //sau khi hoàn tất thanh toán sẽ đi vào link này (thường là link web thanh toán thành công của mình)
-    redirecturl: "https://vticinema.web.app/",
+    redirecturl:
+      "https://vticinema.web.app/payment-result?appTransId=${appTransId}",
+    // redirecturl:
+    //   "https://08d6-219-112-39-205.ngrok-free.app/payment-result?appTransId=${appTransId}",
   };
 
   const items = [];
   const transID = Math.floor(Math.random() * 1000000);
 
-  const { amount, description } = req.body;
+  const { amount, description, email } = req.body;
   console.log(amount);
   console.log(description);
+  console.log(email);
 
+  // Hàm tạo app_trans_id
+  function generateAppTransId() {
+    const now = new Date();
+    const datePart = now.toISOString().slice(2, 10).replace(/-/g, ""); // Lấy định dạng yymmdd
+    const randomPart = Math.floor(Math.random() * 100000); // Sinh số ngẫu nhiên từ 0 đến 99999
+    return `${datePart}_${randomPart}`;
+  }
+  // Tạo app_trans_id
+  const appTransId = generateAppTransId();
   const order = {
+    app_trans_id: appTransId, // Mã giao dịch của ứng dụng
     app_id: config.app_id,
-    app_trans_id: `${moment().format("YYMMDD")}_${transID}`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
-    app_user: "user123",
+    app_user: email || "unknown_user",
     app_time: Date.now(), // miliseconds
     item: JSON.stringify(items),
     embed_data: JSON.stringify(embed_data),
     amount: amount,
     //khi thanh toán xong, zalopay server sẽ POST đến url này để thông báo cho server của mình
     //Chú ý: cần dùng ngrok để public url thì Zalopay Server mới call đến được
-    callback_url: "https://b074-1-53-37-194.ngrok-free.app/callback",
+    // callback_url: "https://08d6-219-112-39-205.ngrok-free.app/callback",
+    callback_url: "https://vticinema.web.app/callback",
     description: `${description} #${transID}`,
     bank_code: "",
   };
@@ -90,6 +107,16 @@ app.post("/payment", async (req, res) => {
     order.item;
   order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
 
+  // Lưu thông tin đơn hàng vào Firebase
+  const orderRef = db.ref(`orders/${appTransId}`);
+  await orderRef.set({
+    app_trans_id: appTransId,
+    description: `${description} #${transID}`,
+    createdAt: new Date().toISOString(),
+    amount,
+    app_user: email,
+    status: "pending",
+  });
   try {
     const result = await axios.post(config.endpoint, null, { params: order });
 
@@ -104,46 +131,88 @@ app.post("/payment", async (req, res) => {
  * description: callback để Zalopay Server call đến khi thanh toán thành công.
  * Khi và chỉ khi ZaloPay đã thu tiền khách hàng thành công thì mới gọi API này để thông báo kết quả.
  */
-app.post("/callback", (req, res) => {
+
+app.post("/callback", async (req, res) => {
+  console.log("Callback nhận được:", req.body);
+
   let result = {};
-  console.log(req.body);
   try {
-    let dataStr = req.body.data;
-    let reqMac = req.body.mac;
+    const dataStr = req.body.data; // Chuỗi dữ liệu từ ZaloPay
+    const reqMac = req.body.mac; // MAC từ ZaloPay
 
-    let mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
-    console.log("mac =", mac);
+    // Tạo MAC để xác thực
+    const mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
+    console.log("MAC:", mac);
 
-    // kiểm tra callback hợp lệ (đến từ ZaloPay server)
     if (reqMac !== mac) {
-      // callback không hợp lệ
+      console.error("MAC không khớp!");
       result.return_code = -1;
       result.return_message = "mac not equal";
     } else {
-      // thanh toán thành công
-      // merchant cập nhật trạng thái cho đơn hàng ở đây
-      let dataJson = JSON.parse(dataStr, config.key2);
-      console.log(
-        "update order's status = success where app_trans_id =",
-        dataJson["app_trans_id"]
-      );
+      const dataJson = JSON.parse(dataStr);
+      const appTransId = dataJson["app_trans_id"];
+      console.log("appTransId từ callback::", appTransId);
 
+      // Cập nhật trạng thái giao dịch trong Firebase
+      const orderRef = db.ref(`orders/${appTransId}`);
+      await orderRef.update({
+        status: "success",
+        updatedAt: new Date().toISOString(),
+      });
+
+      console.log("Cập nhật trạng thái thành công!");
       result.return_code = 1;
       result.return_message = "success";
     }
-  } catch (ex) {
-    console.log("lỗi:::" + ex.message);
-    result.return_code = 0; // ZaloPay server sẽ callback lại (tối đa 3 lần)
-    result.return_message = ex.message;
+  } catch (error) {
+    console.error("Lỗi trong callback:", error.message);
+    result.return_code = 0;
+    result.return_message = error.message;
   }
 
-  // thông báo kết quả cho ZaloPay server
-  res.json(result);
+  res.status(200).json(result); // Trả về kết quả cho ZaloPay
 });
 
-// app.listen(8888, function () {
-//   console.log("Server is listening at port :8888");
-// });
+// Chạy cron job mỗi ngày 1 lần để dọn các giao dịch pending quá hạn
+cron.schedule("0 0 * * *", async () => {
+  console.log("Dọn dẹp giao dịch `pending` lâu...");
+  const ordersRef = ref(db, "orders");
+  const snapshot = await get(ordersRef);
+
+  if (snapshot.exists()) {
+    const orders = snapshot.val();
+    const now = Date.now();
+    const db = getDatabase();
+
+    for (const [orderId, order] of Object.entries(orders)) {
+      if (order.status === "pending") {
+        const createdAt = new Date(order.createdAt).getTime();
+        const age = now - createdAt;
+
+        // Xóa đơn hàng nếu đã lâu hơn 24 giờ
+        if (age > 24 * 60 * 60 * 1000) {
+          console.log(`Xóa giao dịch quá hạn: ${orderId}`);
+          await remove(ref(db, `orders/${orderId}`));
+        }
+      }
+    }
+  }
+});
+
+//Kiểm tra trạng thái đơn hàng
+app.get("/payment-status/:app_trans_id", async (req, res) => {
+  const app_trans_id = req.params.app_trans_id;
+
+  // Giả lập kiểm tra trạng thái đơn hàng
+  const orderStatus = getOrderStatusFromDatabase(app_trans_id); // Lấy từ DB
+
+  if (orderStatus) {
+    res.json({ status: "success", order: orderStatus });
+  } else {
+    res.status(404).json({ status: "not_found", message: "Order not found" });
+  }
+});
+
 if (process.env.NODE_ENV !== "production") {
   app.listen(8888, function () {
     console.log("Server is listening at port 8888");
