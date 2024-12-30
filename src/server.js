@@ -84,7 +84,8 @@ app.post("/payment", async (req, res) => {
     //khi thanh toán xong, zalopay server sẽ POST đến url này để thông báo cho server của mình
     //Chú ý: cần dùng ngrok để public url thì Zalopay Server mới call đến được
     // callback_url: "https://08d6-219-112-39-205.ngrok-free.app/callback",
-    callback_url: "https://vticinema.web.app/callback",
+    // callback_url: "https://vticinema.web.app/callback",
+    callback_url: "https://vticinema-zalopay-test.vercel.app/callback",
     description: `${description} #${transID}`,
     bank_code: "",
   };
