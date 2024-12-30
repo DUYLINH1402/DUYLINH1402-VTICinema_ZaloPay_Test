@@ -31,14 +31,13 @@ app.use(
     },
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true, // Cho phép gửi cookie hoặc thông tin đăng nhập
   })
 );
-
 // Route mặc định
 app.get("/", (req, res) => {
   res.send("Welcome to the VTI Cinema Payment API!");
 });
-app.use(cors()); // Cho phép tất cả các domain truy cập API (dùng cho development)
 
 app.use(bodyParser.json());
 
