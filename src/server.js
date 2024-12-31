@@ -48,12 +48,19 @@ app.use(bodyParser.json());
  * description: tạo đơn hàng, thanh toán
  */
 app.post("/payment", async (req, res) => {
+  // Hàm tạo app_trans_id
+  function generateAppTransId() {
+    const now = new Date();
+    const datePart = now.toISOString().slice(2, 10).replace(/-/g, ""); // Lấy định dạng yymmdd
+    const randomPart = Math.floor(Math.random() * 100000); // Sinh số ngẫu nhiên từ 0 đến 99999
+    return `${datePart}_${randomPart}`;
+  }
+  // Tạo app_trans_id
+  const appTransId = generateAppTransId();
   const embed_data = {
     //sau khi hoàn tất thanh toán sẽ đi vào link này (thường là link web thanh toán thành công của mình)
-    redirecturl:
-      "https://vticinema.web.app/payment-result?appTransId=${appTransId}",
-    // redirecturl:
-    //   "https://08d6-219-112-39-205.ngrok-free.app/payment-result?appTransId=${appTransId}",
+    redirecturl: `https://vticinema.web.app/payment-result?appTransId=${appTransId}`,
+    // redirecturl: `http://localhost:5173/payment-result?appTransId=${appTransId}`,
   };
 
   const items = [];
@@ -64,15 +71,6 @@ app.post("/payment", async (req, res) => {
   console.log(description);
   console.log(email);
 
-  // Hàm tạo app_trans_id
-  function generateAppTransId() {
-    const now = new Date();
-    const datePart = now.toISOString().slice(2, 10).replace(/-/g, ""); // Lấy định dạng yymmdd
-    const randomPart = Math.floor(Math.random() * 100000); // Sinh số ngẫu nhiên từ 0 đến 99999
-    return `${datePart}_${randomPart}`;
-  }
-  // Tạo app_trans_id
-  const appTransId = generateAppTransId();
   const order = {
     app_trans_id: appTransId, // Mã giao dịch của ứng dụng
     app_id: config.app_id,
@@ -83,8 +81,7 @@ app.post("/payment", async (req, res) => {
     amount: amount,
     //khi thanh toán xong, zalopay server sẽ POST đến url này để thông báo cho server của mình
     //Chú ý: cần dùng ngrok để public url thì Zalopay Server mới call đến được
-    // callback_url: "https://08d6-219-112-39-205.ngrok-free.app/callback",
-    // callback_url: "https://vticinema.web.app/callback",
+    // callback_url: "https://cc00-219-112-33-158.ngrok-free.app/callback",
     callback_url: "https://vticinema-zalopay-test.vercel.app/callback",
     description: `${description} #${transID}`,
     bank_code: "",
