@@ -47,15 +47,16 @@ app.use(bodyParser.json());
  * Real	POST	https://openapi.zalopay.vn/v2/create
  * description: tạo đơn hàng, thanh toán
  */
+
+// Hàm tạo app_trans_id
+function generateAppTransId() {
+  const now = new Date();
+  const datePart = now.toISOString().slice(2, 10).replace(/-/g, ""); // Lấy định dạng yymmdd
+  const randomPart = Math.floor(Math.random() * 100000); // Sinh số ngẫu nhiên từ 0 đến 99999
+  return `${datePart}_${randomPart}`;
+}
+
 app.post("/payment", async (req, res) => {
-  // Hàm tạo app_trans_id
-  function generateAppTransId() {
-    const now = new Date();
-    const datePart = now.toISOString().slice(2, 10).replace(/-/g, ""); // Lấy định dạng yymmdd
-    const randomPart = Math.floor(Math.random() * 100000); // Sinh số ngẫu nhiên từ 0 đến 99999
-    return `${datePart}_${randomPart}`;
-  }
-  // Tạo app_trans_id
   const appTransId = generateAppTransId();
   const embed_data = {
     //sau khi hoàn tất thanh toán sẽ đi vào link này (thường là link web thanh toán thành công của mình)
@@ -65,11 +66,12 @@ app.post("/payment", async (req, res) => {
 
   const items = [];
   const transID = Math.floor(Math.random() * 1000000);
-
-  const { amount, description, email } = req.body;
+  // Tạo app_trans_id
+  const { amount, description, email, services, movieDetails } = req.body;
   console.log(amount);
   console.log(description);
   console.log(email);
+  console.log("Service: ", services);
 
   const order = {
     app_trans_id: appTransId, // Mã giao dịch của ứng dụng
@@ -81,7 +83,7 @@ app.post("/payment", async (req, res) => {
     amount: amount,
     //khi thanh toán xong, zalopay server sẽ POST đến url này để thông báo cho server của mình
     //Chú ý: cần dùng ngrok để public url thì Zalopay Server mới call đến được
-    // callback_url: "https://cc00-219-112-33-158.ngrok-free.app/callback",
+    // callback_url: "https://7c3c-126-103-150-211.ngrok-free.app/callback",
     callback_url: "https://vticinema-zalopay-test.vercel.app/callback",
     description: `${description} #${transID}`,
     bank_code: "",
@@ -105,7 +107,7 @@ app.post("/payment", async (req, res) => {
   order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
 
   // Lưu thông tin đơn hàng vào Firebase
-  const orderRef = db.ref(`orders/${appTransId}`);
+  const orderRef = db.ref(`Orders/${appTransId}`);
   await orderRef.set({
     app_trans_id: appTransId,
     description: `${description} #${transID}`,
@@ -113,6 +115,8 @@ app.post("/payment", async (req, res) => {
     amount,
     app_user: email,
     status: "pending",
+    services,
+    movieDetails,
   });
   try {
     const result = await axios.post(config.endpoint, null, { params: order });
@@ -130,13 +134,16 @@ app.post("/payment", async (req, res) => {
  */
 
 app.post("/callback", async (req, res) => {
+  // Lấy appTransId liệu từ ZaloPay
+  const data = JSON.parse(req.body.data); // Parse JSON nếu `data` là chuỗi JSON
+  const appTransId = data.app_trans_id; // Lấy app_trans_id từ data
+  console.log("req.body:", req.body); // Xem toàn bộ req.body
+  console.log("appTransId nhận được:", appTransId);
   console.log("Callback nhận được:", req.body);
-
   let result = {};
   try {
     const dataStr = req.body.data; // Chuỗi dữ liệu từ ZaloPay
     const reqMac = req.body.mac; // MAC từ ZaloPay
-
     // Tạo MAC để xác thực
     const mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
     console.log("MAC:", mac);
@@ -147,11 +154,8 @@ app.post("/callback", async (req, res) => {
       result.return_message = "mac not equal";
     } else {
       const dataJson = JSON.parse(dataStr);
-      const appTransId = dataJson["app_trans_id"];
-      console.log("appTransId từ callback::", appTransId);
-
       // Cập nhật trạng thái giao dịch trong Firebase
-      const orderRef = db.ref(`orders/${appTransId}`);
+      const orderRef = db.ref(`Orders/${appTransId}`);
       await orderRef.update({
         status: "success",
         updatedAt: new Date().toISOString(),
@@ -173,7 +177,7 @@ app.post("/callback", async (req, res) => {
 // Chạy cron job mỗi ngày 1 lần để dọn các giao dịch pending quá hạn
 cron.schedule("0 0 * * *", async () => {
   console.log("Dọn dẹp giao dịch `pending` lâu...");
-  const ordersRef = ref(db, "orders");
+  const ordersRef = ref(db, "Orders");
   const snapshot = await get(ordersRef);
 
   if (snapshot.exists()) {
@@ -189,7 +193,7 @@ cron.schedule("0 0 * * *", async () => {
         // Xóa đơn hàng nếu đã lâu hơn 24 giờ
         if (age > 24 * 60 * 60 * 1000) {
           console.log(`Xóa giao dịch quá hạn: ${orderId}`);
-          await remove(ref(db, `orders/${orderId}`));
+          await remove(ref(db, `Orders/${orderId}`));
         }
       }
     }
