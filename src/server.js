@@ -138,6 +138,7 @@ app.post("/payment", async (req, res) => {
  */
 
 app.post("/callback", async (req, res) => {
+  console.log("Dữ liệu callback nhận được:", req.body);
   // Lấy appTransId liệu từ ZaloPay
   const data =
     typeof req.body.data === "string"
@@ -145,16 +146,34 @@ app.post("/callback", async (req, res) => {
       : req.body.data; // Parse JSON nếu `data` là chuỗi JSON
   // const data = JSON.parse(req.body.data);
   const appTransId = data.app_trans_id; // Lấy app_trans_id từ data
-  console.log("req.body:", req.body); // Xem toàn bộ req.body
-  console.log("appTransId nhận được:", appTransId);
-  console.log("Callback nhận được:", req.body);
+
+  // console.log("req.body:", req.body); // Xem toàn bộ req.body
+  // console.log("appTransId nhận được:", appTransId);
+  // console.log("Callback nhận được:", req.body);
   let result = {};
   try {
     const dataStr = req.body.data; // Chuỗi dữ liệu từ ZaloPay
+    if (!dataStr) {
+      console.error("Dữ liệu `data` không tồn tại!");
+      return res.status(400).json({ error: "Dữ liệu `data` không tồn tại!" });
+    }
     const reqMac = req.body.mac; // MAC từ ZaloPay
+
     // Tạo MAC để xác thực
-    const mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
+    try {
+      const mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
+      console.log("MAC được tạo:", mac);
+    } catch (error) {
+      console.error("Lỗi khi tạo MAC:", error.message);
+      return res.status(500).json({ error: "Lỗi khi tạo MAC" });
+    }
     console.log("MAC:", mac);
+
+    // FixBug
+    if (!config.key2) {
+      console.error("key2 không tồn tại hoặc chưa được cấu hình!");
+    }
+    console.log("key2:", config.key2);
 
     if (reqMac !== mac) {
       console.error("MAC không khớp!");
