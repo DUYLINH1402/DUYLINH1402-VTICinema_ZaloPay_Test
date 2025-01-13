@@ -136,70 +136,111 @@ app.post("/payment", async (req, res) => {
  * description: callback để Zalopay Server call đến khi thanh toán thành công.
  * Khi và chỉ khi ZaloPay đã thu tiền khách hàng thành công thì mới gọi API này để thông báo kết quả.
  */
-
 app.post("/callback", async (req, res) => {
   console.log("Dữ liệu callback nhận được:", req.body);
-  // Lấy appTransId liệu từ ZaloPay
-  const data =
-    typeof req.body.data === "string"
-      ? JSON.parse(req.body.data)
-      : req.body.data; // Parse JSON nếu `data` là chuỗi JSON
-  // const data = JSON.parse(req.body.data);
-  const appTransId = data.app_trans_id; // Lấy app_trans_id từ data
 
-  // console.log("req.body:", req.body); // Xem toàn bộ req.body
-  // console.log("appTransId nhận được:", appTransId);
-  // console.log("Callback nhận được:", req.body);
-  let result = {};
   try {
-    const dataStr = req.body.data; // Chuỗi dữ liệu từ ZaloPay
+    // Kiểm tra và parse dữ liệu callback
+    const dataStr = req.body.data;
     if (!dataStr) {
       console.error("Dữ liệu `data` không tồn tại!");
       return res.status(400).json({ error: "Dữ liệu `data` không tồn tại!" });
     }
+
     const reqMac = req.body.mac; // MAC từ ZaloPay
+    const data = typeof dataStr === "string" ? JSON.parse(dataStr) : dataStr;
+    const appTransId = data.app_trans_id; // Lấy app_trans_id từ data
+
+    console.log("appTransId nhận được:", appTransId);
+
+    // Kiểm tra key2
+    if (!config.key2) {
+      console.error("key2 không được cấu hình trong file .env!");
+      return res.status(500).json({ error: "key2 không được cấu hình!" });
+    }
 
     // Tạo MAC để xác thực
-    try {
-      const mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
-      console.log("MAC được tạo:", mac);
-    } catch (error) {
-      console.error("Lỗi khi tạo MAC:", error.message);
-      return res.status(500).json({ error: "Lỗi khi tạo MAC" });
-    }
-    console.log("MAC:", mac);
+    const calculatedMac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
+    console.log("MAC tính toán:", calculatedMac);
+    console.log("MAC nhận từ ZaloPay:", reqMac);
 
-    // FixBug
-    if (!config.key2) {
-      console.error("key2 không tồn tại hoặc chưa được cấu hình!");
-    }
-    console.log("key2:", config.key2);
-
-    if (reqMac !== mac) {
+    if (reqMac !== calculatedMac) {
       console.error("MAC không khớp!");
-      result.return_code = -1;
-      result.return_message = "mac not equal";
-    } else {
-      // const dataJson = JSON.parse(dataStr);
-      // Cập nhật trạng thái giao dịch trong Firebase
-      const orderRef = db.ref(`Orders/${appTransId}`);
-      await orderRef.update({
-        status: "success",
-        updatedAt: new Date().toISOString(),
-      });
-
-      console.log("Cập nhật trạng thái thành công!");
-      result.return_code = 1;
-      result.return_message = "success";
+      return res.status(400).json({ error: "MAC không khớp!" });
     }
+
+    // Cập nhật trạng thái giao dịch trong Firebase
+    const orderRef = db.ref(`Orders/${appTransId}`);
+    await orderRef.update({
+      status: "success",
+      updatedAt: new Date().toISOString(),
+    });
+
+    console.log("Cập nhật trạng thái thành công cho giao dịch:", appTransId);
+
+    res.status(200).json({ return_code: 1, return_message: "success" });
   } catch (error) {
     console.error("Lỗi trong callback:", error.message);
-    result.return_code = 0;
-    result.return_message = error.message;
+    res.status(500).json({ return_code: 0, return_message: error.message });
   }
-
-  res.status(200).json(result); // Trả về kết quả cho ZaloPay
 });
+
+// app.post("/callback", async (req, res) => {
+//   console.log("Dữ liệu callback nhận được:", req.body);
+//   // Lấy appTransId liệu từ ZaloPay
+//   const data =
+//     typeof req.body.data === "string"
+//       ? JSON.parse(req.body.data)
+//       : req.body.data; // Parse JSON nếu `data` là chuỗi JSON
+//   // const data = JSON.parse(req.body.data);
+//   const appTransId = data.app_trans_id; // Lấy app_trans_id từ data
+
+//   // console.log("req.body:", req.body); // Xem toàn bộ req.body
+//   // console.log("appTransId nhận được:", appTransId);
+//   // console.log("Callback nhận được:", req.body);
+//   let result = {};
+//   try {
+//     const dataStr = req.body.data; // Chuỗi dữ liệu từ ZaloPay
+//     if (!dataStr) {
+//       console.error("Dữ liệu `data` không tồn tại!");
+//       return res.status(400).json({ error: "Dữ liệu `data` không tồn tại!" });
+//     }
+//     const reqMac = req.body.mac; // MAC từ ZaloPay
+
+//     // Tạo MAC để xác thực
+//     const mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
+//     console.log("MAC:", mac);
+//     // FixBug
+//     if (!config.key2) {
+//       console.error("key2 không tồn tại hoặc chưa được cấu hình!");
+//     }
+//     console.log("key2:", config.key2);
+
+//     if (reqMac !== mac) {
+//       console.error("MAC không khớp!");
+//       result.return_code = -1;
+//       result.return_message = "mac not equal";
+//     } else {
+//       // const dataJson = JSON.parse(dataStr);
+//       // Cập nhật trạng thái giao dịch trong Firebase
+//       const orderRef = db.ref(`Orders/${appTransId}`);
+//       await orderRef.update({
+//         status: "success",
+//         updatedAt: new Date().toISOString(),
+//       });
+
+//       console.log("Cập nhật trạng thái thành công!");
+//       result.return_code = 1;
+//       result.return_message = "success";
+//     }
+//   } catch (error) {
+//     console.error("Lỗi trong callback:", error.message);
+//     result.return_code = 0;
+//     result.return_message = error.message;
+//   }
+
+//   res.status(200).json(result); // Trả về kết quả cho ZaloPay
+// });
 
 // Chạy cron job mỗi ngày 1 lần để dọn các giao dịch pending quá hạn
 cron.schedule("0 0 * * *", async () => {
