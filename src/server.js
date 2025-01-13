@@ -139,7 +139,11 @@ app.post("/payment", async (req, res) => {
 
 app.post("/callback", async (req, res) => {
   // Lấy appTransId liệu từ ZaloPay
-  const data = JSON.parse(req.body.data); // Parse JSON nếu `data` là chuỗi JSON
+  const data =
+    typeof req.body.data === "string"
+      ? JSON.parse(req.body.data)
+      : req.body.data; // Parse JSON nếu `data` là chuỗi JSON
+  // const data = JSON.parse(req.body.data);
   const appTransId = data.app_trans_id; // Lấy app_trans_id từ data
   console.log("req.body:", req.body); // Xem toàn bộ req.body
   console.log("appTransId nhận được:", appTransId);
@@ -157,7 +161,7 @@ app.post("/callback", async (req, res) => {
       result.return_code = -1;
       result.return_message = "mac not equal";
     } else {
-      const dataJson = JSON.parse(dataStr);
+      // const dataJson = JSON.parse(dataStr);
       // Cập nhật trạng thái giao dịch trong Firebase
       const orderRef = db.ref(`Orders/${appTransId}`);
       await orderRef.update({
