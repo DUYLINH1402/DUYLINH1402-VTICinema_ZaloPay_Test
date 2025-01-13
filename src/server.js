@@ -19,7 +19,11 @@ const config = {
 };
 // CORS ORIGIN
 // Cho phép khi Test và khi đã Deploy
-const allowedOrigins = ["http://localhost:5173", "https://vticinema.web.app"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://vticinema.web.app",
+  "https://vticinema-zalopay-test.vercel.app",
+];
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -83,7 +87,7 @@ app.post("/payment", async (req, res) => {
     amount: amount,
     //khi thanh toán xong, zalopay server sẽ POST đến url này để thông báo cho server của mình
     //Chú ý: cần dùng ngrok để public url thì Zalopay Server mới call đến được
-    // callback_url: "https://7c3c-126-103-150-211.ngrok-free.app/callback",
+    // callback_url: "https://a83b-126-103-150-211.ngrok-free.app/callback",
     callback_url: "https://vticinema-zalopay-test.vercel.app/callback",
     description: `${description} #${transID}`,
     bank_code: "",
