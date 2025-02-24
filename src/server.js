@@ -197,6 +197,7 @@ app.post("/callback", async (req, res) => {
 
     // Tạo QR Code cho mã giao dịch
     const generateQRCode = async (appTransId) => {
+      console.log("QR Code Image:", qrCodeImage);
       return await QRCode.toDataURL(appTransId);
     };
     const qrCodeImage = await generateQRCode(appTransId);

@@ -75,9 +75,12 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
       </table>
           <!-- Hiển thị QR Code -->
       <p style="text-align: center;">
-        <img src="${
-          bookingInfo.qrCode
-        }" alt="QR Code giao dịch" style="max-width: 200px; border: 2px solid #ddd; padding: 10px; border-radius: 10px;" />
+      ${
+        bookingInfo.qrCode
+          ? `<img src="${bookingInfo.qrCode}" alt="QR Code giao dịch" style="max-width: 200px; border: 2px solid #ddd; padding: 10px; border-radius: 10px;" />`
+          : "<p style='color: red;'> Lỗi hiển thị QR Code</p>"
+      }
+
       </p>
       <p style="text-align: center; font-size: 16px; color: #e50914; font-weight: bold; margin-top: 10px;">
         Lưu ý: Xuất trình QRCode này tại quầy để nhận vé!
