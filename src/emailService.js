@@ -77,7 +77,7 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
       <p style="text-align: center;">
       ${
         bookingInfo.qrCode
-          ? `<img src="${bookingInfo.qrCode}" alt="QR Code giao dịch" style="max-width: 200px; border: 2px solid #ddd; padding: 10px; border-radius: 10px;" />`
+          ? `<img src="${bookingInfo.qrCode}" alt="QR Code giao dịch" style="max-width: 300px; border: 2px solid #ddd; padding: 10px; border-radius: 10px;" />`
           : "<p style='color: red;'> Lỗi hiển thị QR Code</p>"
       }
 
