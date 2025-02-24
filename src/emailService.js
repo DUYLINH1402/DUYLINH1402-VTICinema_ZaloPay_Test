@@ -21,12 +21,11 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
     subject: "Đặt vé xem phim thành công!",
     html: `
             <h2>Xin chào ${bookingInfo.customerName},</h2>
-            <p>Bạn đã đặt vé thành công cho bộ phim <strong>${
-              bookingInfo.movieTitle
-            }</strong>.</p>
+            <p>Bạn đã đặt vé thành công cho bộ phim <strong>${bookingInfo.movieTitle}</strong>.</p>
             <p><strong>Rạp:</strong> ${bookingInfo.cinema}</p>
-            <p><strong>Suất chiếu:</strong> ${bookingInfo.showtime}</p>
-            <p><strong>Ghế:</strong> ${bookingInfo.seats.join(", ")}</p>
+            <p><strong>Suất chiếu:</strong>${bookingInfo.showday} - ${bookingInfo.showtime}</p>
+            <p><strong>Ghế:</strong> ${bookingInfo.seats}</p>
+            <p><strong>Dịch vụ:</strong> ${bookingInfo.services}</p>
             <p><strong>Giá:</strong> ${bookingInfo.price} VND</p>
             <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
             <hr>

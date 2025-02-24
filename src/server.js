@@ -192,10 +192,12 @@ app.post("/callback", async (req, res) => {
     // Gửi email xác nhận đặt vé
     await sendBookingConfirmation(email, {
       customerName: orderData.app_user,
-      movieTitle: movieDetails.title,
-      cinema: movieDetails.cinema,
-      showtime: movieDetails.showtime,
-      seats: orderData.services.map((s) => s.seat),
+      movieTitle: movieDetails.movieName,
+      cinema: movieDetails.theater,
+      showday: movieDetails.showDate,
+      showtime: movieDetails.showTime,
+      seats: movieDetails.seat.map((s) => s.seat).join(", "),
+      services: orderData.services.map((s) => s.services).join(", "),
       price: orderData.amount,
     });
 
