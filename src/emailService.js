@@ -21,7 +21,7 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
     subject: "Đặt vé xem phim thành công!",
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 50px; border-radius: 10px; background-color: #f9f9f9;">
-      <h2 style="color: #e50914; text-align: center;">Xác nhận đặt vé thành công! </h2>
+      <h2 style="color: #e50914; text-align: center;">Xác nhận thanh toán thành công! </h2>
       <p style="font-size: 16px;"><strong>Xin chào ${
         bookingInfo.customerName
       }</strong></p>
@@ -44,9 +44,8 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>🕒 Suất chiếu:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
-            bookingInfo.showday
-          } - ${bookingInfo.showtime}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">
+          ${bookingInfo.showtime}    -    ${bookingInfo.showday}</td>
         </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>🎟️ Ghế:</strong></td>
@@ -73,19 +72,12 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
           ).format(bookingInfo.price)} VND</strong></td>
         </tr>
       </table>
-          <!-- Hiển thị QR Code -->
-      <p style="text-align: center;">
-      ${
-        bookingInfo.qrCode
-          ? `<img src="${bookingInfo.qrCode}" alt="QR Code giao dịch" style="max-width: 300px; border: 2px solid #ddd; padding: 10px; border-radius: 10px;" />`
-          : "<p style='color: red;'> Lỗi hiển thị QR Code</p>"
-      }
 
       </p>
       <p style="text-align: center; font-size: 16px; color: #e50914; font-weight: bold; margin-top: 10px;">
-        Lưu ý: Xuất trình QRCode này tại quầy để nhận vé!
+        Lưu ý: Xuất trình mail này tại quầy để nhận vé!
       </p>
-      <p style="text-align: center; font-size: 16px; color: #333; margin-top: 20px;">
+      <p style="text-align: center; font-size: 16px; color: #333; margin-top: 10px;">
         Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!
       </p>
       <p style="text-align: center; font-size: 16px; color: #333; margin-top: 10px;">

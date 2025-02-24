@@ -86,9 +86,10 @@ app.post("/payment", async (req, res) => {
     item: JSON.stringify(items),
     embed_data: JSON.stringify(embed_data),
     amount: amount,
-    //khi thanh toán xong, zalopay server sẽ POST đến url này để thông báo cho server của mình
+    // Khi thanh toán xong, zalopay server sẽ POST đến url này để thông báo cho server của mình
     //Chú ý: cần dùng ngrok để public url thì Zalopay Server mới call đến được
-    // callback_url: "https://a83b-126-103-150-211.ngrok-free.app/callback",
+    // callback_url:
+    //   "https://eb1d-2402-800-6392-bd66-60cf-f1f5-e31f-8bef.ngrok-free.app/callback",
     callback_url: "https://vticinema-zalopay-test.vercel.app/callback",
     description: `${description} #${transID}`,
     bank_code: "",
@@ -194,20 +195,18 @@ app.post("/callback", async (req, res) => {
     const email = orderData.app_user; // Email khách hàng
     const movieDetails = orderData.movieDetails;
 
-    // Tạo QR Code cho mã giao dịch
-    const QRCode = require("qrcode");
-    const generateQRCode = async (appTransId) => {
-      return await QRCode.toDataURL(appTransId);
+    // Chuyển đổi ngày suất chiếu sang định dạng Việt Nam
+    const formatDateVN = (dateString) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("vi-VN"); // Định dạng "DD/MM/YYYY"
     };
-    const qrCodeImage = await generateQRCode(appTransId);
-    console.log("QR Code Base64:", qrCodeImage.slice(0, 50));
 
     // Gửi email xác nhận đặt vé
     await sendBookingConfirmation(email, {
       customerName: orderData.app_user,
       movieTitle: movieDetails.movieName,
       cinema: movieDetails.theater,
-      showday: movieDetails.showDate,
+      showday: formatDateVN(movieDetails.showDate),
       showtime: movieDetails.showTime,
       seats: movieDetails.seat,
       services:
@@ -217,7 +216,6 @@ app.post("/callback", async (req, res) => {
       price: orderData.amount,
       transactionId: appTransId, // Mã giao dịch
       transactionTime: orderData.transactionTime || "Không xác định", //Thời gian giao dịch
-      qrCode: qrCodeImage, // Gửi ảnh QR Code
     });
 
     res.status(200).json({ return_code: 1, return_message: "success" });
