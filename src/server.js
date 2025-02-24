@@ -188,6 +188,7 @@ app.post("/callback", async (req, res) => {
     const orderData = snapshot.val();
     const email = orderData.app_user; // Email khách hàng
     const movieDetails = orderData.movieDetails;
+    const services = orderData.services;
 
     // Gửi email xác nhận đặt vé
     await sendBookingConfirmation(email, {
@@ -197,7 +198,10 @@ app.post("/callback", async (req, res) => {
       showday: movieDetails.showDate,
       showtime: movieDetails.showTime,
       seats: movieDetails.seat,
-      services: orderData.services,
+      services:
+        orderData.services
+          ?.map((s) => `${s.name} (${s.quantity} phần)`)
+          .join(", ") || "Không có dịch vụ",
       price: orderData.amount,
     });
 
