@@ -10,6 +10,7 @@ const cors = require("cors");
 const app = express();
 const { getDatabase, ref, remove } = require("firebase-admin/database");
 const { db } = require("./firebase/firebaseConfig");
+const sendBookingConfirmation = require("./emailService");
 
 const config = {
   app_id: process.env.ZALO_APP_ID,
@@ -175,8 +176,28 @@ app.post("/callback", async (req, res) => {
       status: "success",
       updatedAt: new Date().toISOString(),
     });
-
     console.log("Cập nhật trạng thái thành công cho giao dịch:", appTransId);
+
+    // Lấy thông tin đơn hàng từ Firebase để gửi email
+    const snapshot = await orderRef.once("value");
+    if (!snapshot.exists()) {
+      console.error("Không tìm thấy đơn hàng trong DB!");
+      return res.status(404).json({ error: "Đơn hàng không tồn tại!" });
+    }
+
+    const orderData = snapshot.val();
+    const email = orderData.app_user; // Email khách hàng
+    const movieDetails = orderData.movieDetails;
+
+    // Gửi email xác nhận đặt vé
+    await sendBookingConfirmation(email, {
+      customerName: orderData.app_user,
+      movieTitle: movieDetails.title,
+      cinema: movieDetails.cinema,
+      showtime: movieDetails.showtime,
+      seats: orderData.services.map((s) => s.seat),
+      price: orderData.amount,
+    });
 
     res.status(200).json({ return_code: 1, return_message: "success" });
   } catch (error) {
