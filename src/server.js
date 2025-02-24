@@ -11,7 +11,6 @@ const app = express();
 const { getDatabase, ref, remove } = require("firebase-admin/database");
 const { db } = require("./firebase/firebaseConfig");
 const sendBookingConfirmation = require("./emailService");
-const QRCode = require("qrcode");
 
 const config = {
   app_id: process.env.ZALO_APP_ID,
@@ -59,7 +58,7 @@ function generateAppTransId() {
   const now = new Date();
   const datePart = now.toISOString().slice(2, 10).replace(/-/g, ""); // Lấy định dạng yymmdd
   const randomPart = Math.floor(Math.random() * 100000); // Sinh số ngẫu nhiên từ 0 đến 99999
-  return `${datePart}_${randomPart}`;
+  return `${datePart}${randomPart}`;
 }
 
 app.post("/payment", async (req, res) => {
@@ -196,11 +195,13 @@ app.post("/callback", async (req, res) => {
     const movieDetails = orderData.movieDetails;
 
     // Tạo QR Code cho mã giao dịch
+    const QRCode = require("qrcode");
     const generateQRCode = async (appTransId) => {
       return await QRCode.toDataURL(appTransId);
     };
     const qrCodeImage = await generateQRCode(appTransId);
-    console.log("QR Code Image:", qrCodeImage);
+    console.log("QR Code Base64:", qrCodeImage.slice(0, 50));
+
     // Gửi email xác nhận đặt vé
     await sendBookingConfirmation(email, {
       customerName: orderData.app_user,
