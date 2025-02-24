@@ -196,8 +196,8 @@ app.post("/callback", async (req, res) => {
       cinema: movieDetails.theater,
       showday: movieDetails.showDate,
       showtime: movieDetails.showTime,
-      seats: movieDetails.seat.map((s) => s.seat).join(", "),
-      services: orderData.services.map((s) => s.services).join(", "),
+      seats: movieDetails.seat,
+      services: orderData.services,
       price: orderData.amount,
     });
 
