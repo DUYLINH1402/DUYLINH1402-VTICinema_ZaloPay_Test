@@ -170,10 +170,15 @@ app.post("/callback", async (req, res) => {
       return res.status(400).json({ error: "MAC không khớp!" });
     }
 
+    const transactionTime = new Date().toLocaleString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+    }); // Lưu ngày giờ theo múi giờ Việt Nam
+
     // Cập nhật trạng thái giao dịch trong Firebase
     const orderRef = db.ref(`Orders/${appTransId}`);
     await orderRef.update({
       status: "success",
+      transactionTime: transactionTime, // Thêm ngày giờ giao dịch
       updatedAt: new Date().toISOString(),
     });
     console.log("Cập nhật trạng thái thành công cho giao dịch:", appTransId);
@@ -203,6 +208,8 @@ app.post("/callback", async (req, res) => {
           ?.map((s) => `${s.name} (${s.quantity} phần)`)
           .join(", ") || "Không có dịch vụ",
       price: orderData.amount,
+      transactionId: appTransId, // Mã giao dịch
+      transactionTime: orderData.transactionTime || "Không xác định", //Thời gian giao dịch
     });
 
     res.status(200).json({ return_code: 1, return_message: "success" });

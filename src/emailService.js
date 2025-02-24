@@ -21,11 +21,15 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
     subject: "Đặt vé xem phim thành công!",
     html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px; background-color: #f9f9f9;">
-      <h2 style="color: #e50914; text-align: center;">🎉 Xác nhận đặt vé thành công! 🎉</h2>
+      <h2 style="color: #e50914; text-align: center;">Xác nhận đặt vé thành công! </h2>
       <p style="font-size: 16px;"><strong>Xin chào ${bookingInfo.customerName},</strong></p>
       <p style="font-size: 16px;">Bạn đã đặt vé thành công cho bộ phim <strong>${bookingInfo.movieTitle}</strong>.</p>
-      
+
       <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+       <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>💳 Mã giao dịch:</strong></td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #0056b3; font-size: 16px;"><strong>${bookingInfo.transactionId}</strong></td>
+        </tr>
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>🎬 Rạp:</strong></td>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;">${bookingInfo.cinema}</td>
@@ -43,17 +47,21 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
           <td style="padding: 8px; border-bottom: 1px solid #ddd;">${bookingInfo.services}</td>
         </tr>
         <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>📅 Ngày giao dịch:</strong></td>
+          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${bookingInfo.transactionTime}</td>
+        </tr>
+        <tr>
           <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>💰 Tổng thanh toán:</strong></td>
           <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #e50914; font-size: 18px;"><strong>${bookingInfo.price}</strong></td>
         </tr>
       </table>
 
       <p style="text-align: center; font-size: 16px; color: #333; margin-top: 20px;">
-        Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi! Chúc bạn có một trải nghiệm tuyệt vời 🎬🍿
+        Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi! Chúc bạn có một trải nghiệm tuyệt vời!
       </p>
 
       <div style="text-align: center; margin-top: 20px;">
-        <p style="font-size: 18px; color: #e50914; font-weight: bold;">Hẹn gặp lại tại rạp!</p>
+        <p style="font-size: 18px; color: #e50914; font-weight: bold;"> Hẹn gặp lại tại rạp!</p>
       </div>
     </div>
   `,
@@ -61,9 +69,9 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`📧 Email xác nhận đã gửi tới ${toEmail}`);
+    console.log(`Email xác nhận đã gửi tới ${toEmail}`);
   } catch (error) {
-    console.error("❌ Lỗi gửi email:", error);
+    console.error("Lỗi gửi email:", error);
   }
 };
 
