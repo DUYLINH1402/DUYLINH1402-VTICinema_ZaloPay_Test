@@ -20,74 +20,132 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
     to: toEmail,
     subject: "Đặt vé xem phim thành công!",
     html: `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 50px; border-radius: 10px; background-color: #f9f9f9;">
-      <h2 style="color: #e50914; text-align: center;">Xác nhận thanh toán thành công! </h2>
-      <p style="font-size: 16px;"><strong>Xin chào ${
-        bookingInfo.customerName
-      }</strong></p>
-      <p style="font-size: 16px;">Bạn đã đặt vé thành công cho bộ phim <strong>${
-        bookingInfo.movieTitle
-      }</strong>.</p>
+    <html>
+      <head>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+          }
+          .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+          }
+          h2 {
+            color: #e50914;
+            text-align: center;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+          }
+          td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+          }
+          .highlight {
+            color: #e50914;
+            font-size: 18px;
+            font-weight: bold;
+          }
+          .note {
+            text-align: center;
+            font-size: 16px;
+            color: #e50914;
+            font-weight: bold;
+            margin-top: 10px;
+          }
+          .footer {
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            margin-top: 10px;
+          }
+          .cta {
+            text-align: center;
+            font-size: 18px;
+            color: #e50914;
+            font-weight: bold;
+          }
 
-      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-       <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>💳 Mã giao dịch:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #0056b3; font-size: 16px;"><strong>${
-            bookingInfo.transactionId
-          }</strong></td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>🎬 Rạp:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
-            bookingInfo.cinema
-          }</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>🕒 Suất chiếu:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">
-          ${bookingInfo.showtime}    -    ${bookingInfo.showday}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>🎟️ Ghế:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
-            bookingInfo.seats
-          }</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>🍿 Dịch vụ:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
-            bookingInfo.services
-          }</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>📅 Ngày giao dịch:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;">${
-            bookingInfo.transactionTime
-          }</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>💰 Tổng thanh toán:</strong></td>
-          <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #e50914; font-size: 18px;"><strong> ${new Intl.NumberFormat(
-            "vi-VN"
-          ).format(bookingInfo.price)} VND</strong></td>
-        </tr>
-      </table>
+          /* 📱 Tối ưu hiển thị trên Mobile */
+          @media screen and (max-width: 600px) {
+            .container {
+              padding: 15px;
+            }
+            h2 {
+              font-size: 20px;
+            }
+            td {
+              font-size: 14px;
+              padding: 6px;
+            }
+            .highlight {
+              font-size: 16px;
+            }
+            .note, .footer, .cta {
+              font-size: 14px;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h2>Xác nhận thanh toán thành công!</h2>
+          <p><strong>Xin chào ${bookingInfo.customerName}</strong>,</p>
+          <p>Bạn đã đặt vé thành công cho bộ phim <strong>${
+            bookingInfo.movieTitle
+          }</strong>.</p>
 
-      </p>
-      <p style="text-align: center; font-size: 16px; color: #e50914; font-weight: bold; margin-top: 10px;">
-        Lưu ý: Xuất trình mail này tại quầy để nhận vé!
-      </p>
-      <p style="text-align: center; font-size: 16px; color: #333; margin-top: 10px;">
-        Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!
-      </p>
-      <p style="text-align: center; font-size: 16px; color: #333; margin-top: 10px;">
-        Chúc bạn có một trải nghiệm tuyệt vời!
-      </p>
+          <table>
+            <tr>
+              <td><strong>💳 Mã giao dịch:</strong></td>
+              <td style="color: #0056b3; font-size: 16px;"><strong>${
+                bookingInfo.transactionId
+              }</strong></td>
+            </tr>
+            <tr>
+              <td><strong>🎬 Rạp:</strong></td>
+              <td>${bookingInfo.cinema}</td>
+            </tr>
+            <tr>
+              <td><strong>🕒 Suất chiếu:</strong></td>
+              <td>${bookingInfo.showtime} - ${bookingInfo.showday}</td>
+            </tr>
+            <tr>
+              <td><strong>🎟️ Ghế:</strong></td>
+              <td>${bookingInfo.seats}</td>
+            </tr>
+            <tr>
+              <td><strong>🍿 Dịch vụ:</strong></td>
+              <td>${bookingInfo.services}</td>
+            </tr>
+            <tr>
+              <td><strong>📅 Ngày giao dịch:</strong></td>
+              <td>${bookingInfo.transactionTime}</td>
+            </tr>
+            <tr>
+              <td><strong>💰 Tổng thanh toán:</strong></td>
+              <td class="highlight">${new Intl.NumberFormat("vi-VN").format(
+                bookingInfo.price
+              )} VND</td>
+            </tr>
+          </table>
 
-      <div style="text-align: center; margin-top: 20px;">
-        <p style="font-size: 18px; color: #e50914; font-weight: bold;"> Hẹn gặp lại bạn tại rạp!</p>
-      </div>
-    </div>
+          <p class="note">Lưu ý: Xuất trình mail này tại quầy để nhận vé!</p>
+          <p class="footer">Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+          <p class="footer">Chúc bạn có một trải nghiệm tuyệt vời!</p>
+          <div class="cta">Hẹn gặp lại bạn tại rạp!</div>
+        </div>
+      </body>
+    </html>
   `,
   };
 
