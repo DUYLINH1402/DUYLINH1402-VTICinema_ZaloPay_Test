@@ -5,7 +5,7 @@ const { db } = require("../firebase/firebaseConfig");
 
 // Lấy danh sách rạp theo thành phố
 async function getCinemasByCity(cityName) {
-  const snapshot = await get(db.ref("Cinemas"));
+  const snapshot = await db.ref("Cinemas").once("value");
   const data = snapshot.val();
 
   const cinemas = Object.values(data || {}).filter(
@@ -17,9 +17,8 @@ async function getCinemasByCity(cityName) {
 
 // Lấy thông tin chi tiết rạp
 async function getCinemaDetailByName(name) {
-  const snapshot = await get(db.ref("Cinemas"));
+  const snapshot = await db.ref("Cinema").once("value");
   const data = snapshot.val();
-
   const cinema = Object.values(data || {}).find((c) =>
     c.cinema_name.toLowerCase().includes(name.toLowerCase())
   );
@@ -30,8 +29,14 @@ async function getCinemaDetailByName(name) {
 }
 
 router.post("/", async (req, res) => {
-  const intentName = req.body.queryResult?.intent?.displayName;
-  const params = req.body.queryResult?.parameters;
+  const { queryResult } = req.body || {};
+
+  if (!queryResult || !queryResult.intent || !queryResult.parameters) {
+    return res.status(400).json({ error: "Invalid Dialogflow webhook request" });
+  }
+
+  const intentName = queryResult.intent.displayName;
+  const params = queryResult.parameters;
   let responseText = "";
 
   try {

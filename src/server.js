@@ -8,6 +8,7 @@ const moment = require("moment"); // npm install moment
 const cron = require("node-cron");
 const cors = require("cors");
 const app = express();
+app.use(express.json());
 const { getDatabase, ref, remove } = require("firebase-admin/database");
 const { db } = require("./firebase/firebaseConfig");
 const sendBookingConfirmation = require("./emailService");
