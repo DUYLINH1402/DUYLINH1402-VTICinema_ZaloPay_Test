@@ -75,7 +75,7 @@ const sendBookingConfirmation = async (toEmail, bookingInfo) => {
             font-weight: bold;
           }
 
-          /* 📱 Tối ưu hiển thị trên Mobile */
+          /* Tối ưu hiển thị trên Mobile */
           @media screen and (max-width: 600px) {
             .container {
               padding: 15px;

@@ -12,6 +12,31 @@ const { getDatabase, ref, remove } = require("firebase-admin/database");
 const { db } = require("./firebase/firebaseConfig");
 const sendBookingConfirmation = require("./emailService");
 
+// Thêm các thư viện cho Dialogflow
+const dialogflow = require("@google-cloud/dialogflow");
+const { v4: uuid } = require("uuid");
+
+// Cấu hình credentials cho Dialogflow
+// Thay thế phần require file JSON bằng biến môi trường
+const credentials = {
+  type: "service_account",
+  project_id: process.env.DIALOGFLOW_PROJECT_ID,
+  private_key_id: "40aa75a82d2079f17687992eac6a94fd486d5058",
+  private_key: process.env.DIALOGFLOW_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  client_email: process.env.DIALOGFLOW_CLIENT_EMAIL,
+  client_id: process.env.DIALOGFLOW_CLIENT_ID,
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(
+    process.env.DIALOGFLOW_CLIENT_EMAIL
+  )}`,
+  universe_domain: "googleapis.com",
+};
+
+const projectId = process.env.DIALOGFLOW_PROJECT_ID;
+const sessionClient = new dialogflow.SessionsClient({ credentials });
+
 const config = {
   app_id: process.env.ZALO_APP_ID,
   key1: process.env.ZALO_KEY1,
@@ -46,6 +71,32 @@ app.get("/", (req, res) => {
 
 app.use(bodyParser.json());
 
+// API Chatbot
+app.post("/chatbot", async (req, res) => {
+  const { message } = req.body;
+  const sessionId = uuid();
+  const sessionPath = sessionClient.projectAgentSessionPath(projectId, sessionId);
+
+  const request = {
+    session: sessionPath,
+    queryInput: {
+      text: {
+        text: message,
+        languageCode: "vi",
+      },
+    },
+  };
+
+  try {
+    const responses = await sessionClient.detectIntent(request);
+    const result = responses[0].queryResult.fulfillmentText;
+    res.json({ response: result });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
 /**
  * methed: POST
  * Sandbox	POST	https://sb-openapi.zalopay.vn/v2/create
@@ -65,8 +116,8 @@ app.post("/payment", async (req, res) => {
   const appTransId = generateAppTransId();
   const embed_data = {
     //sau khi hoàn tất thanh toán sẽ đi vào link này (thường là link web thanh toán thành công của mình)
-    redirecturl: `https://vticinema.web.app/payment-result?appTransId=${appTransId}`,
-    // redirecturl: `http://localhost:5173/payment-result?appTransId=${appTransId}`,
+    // redirecturl: `https://vticinema.web.app/payment-result?appTransId=${appTransId}`,
+    redirecturl: `http://localhost:5173/payment-result?appTransId=${appTransId}`,
   };
 
   const items = [];
@@ -88,9 +139,8 @@ app.post("/payment", async (req, res) => {
     amount: amount,
     // Khi thanh toán xong, zalopay server sẽ POST đến url này để thông báo cho server của mình
     //Chú ý: cần dùng ngrok để public url thì Zalopay Server mới call đến được
-    // callback_url:
-    //   "https://eb1d-2402-800-6392-bd66-60cf-f1f5-e31f-8bef.ngrok-free.app/callback",
-    callback_url: "https://vticinema-zalopay-test.vercel.app/callback",
+    callback_url: "https://81f0-2402-800-6344-e5b3-241b-be62-2d0c-272.ngrok-free.app/callback",
+    // callback_url: "https://vticinema-zalopay-test.vercel.app/callback",
     description: `${description} #${transID}`,
     bank_code: "",
   };
@@ -210,9 +260,8 @@ app.post("/callback", async (req, res) => {
       showtime: movieDetails.showTime,
       seats: movieDetails.seat,
       services:
-        orderData.services
-          ?.map((s) => `${s.name} (${s.quantity} phần)`)
-          .join(", ") || "Không có dịch vụ",
+        orderData.services?.map((s) => `${s.name} (${s.quantity} phần)`).join(", ") ||
+        "Không có dịch vụ",
       price: orderData.amount,
       transactionId: appTransId, // Mã giao dịch
       transactionTime: orderData.transactionTime || "Không xác định", //Thời gian giao dịch
