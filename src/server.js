@@ -119,8 +119,8 @@ app.post("/payment", async (req, res) => {
   const appTransId = generateAppTransId();
   const embed_data = {
     //sau khi hoàn tất thanh toán sẽ đi vào link này (thường là link web thanh toán thành công của mình)
-    // redirecturl: `https://vticinema.web.app/payment-result?appTransId=${appTransId}`,
-    redirecturl: `http://localhost:5173/payment-result?appTransId=${appTransId}`,
+    redirecturl: `https://vticinema.web.app/payment-result?appTransId=${appTransId}`,
+    // redirecturl: `http://localhost:5173/payment-result?appTransId=${appTransId}`,
   };
 
   const items = [];
@@ -142,8 +142,8 @@ app.post("/payment", async (req, res) => {
     amount: amount,
     // Khi thanh toán xong, zalopay server sẽ POST đến url này để thông báo cho server của mình
     //Chú ý: cần dùng ngrok để public url thì Zalopay Server mới call đến được
-    callback_url: "https://81f0-2402-800-6344-e5b3-241b-be62-2d0c-272.ngrok-free.app/callback",
-    // callback_url: "https://vticinema-zalopay-test.vercel.app/callback",
+    // callback_url: "https://81f0-2402-800-6344-e5b3-241b-be62-2d0c-272.ngrok-free.app/callback",
+    callback_url: "https://vticinema-zalopay-test.vercel.app/callback",
     description: `${description} #${transID}`,
     bank_code: "",
   };
