@@ -11,6 +11,9 @@ const app = express();
 const { getDatabase, ref, remove } = require("firebase-admin/database");
 const { db } = require("./firebase/firebaseConfig");
 const sendBookingConfirmation = require("./emailService");
+// Route xử lý webhook từ Dialogflow
+const dialogflowWebhook = require("./routes/dialogflowWebhook");
+app.use("/webhook", dialogflowWebhook);
 
 // Thêm các thư viện cho Dialogflow
 const dialogflow = require("@google-cloud/dialogflow");
